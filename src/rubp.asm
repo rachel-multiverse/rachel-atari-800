@@ -114,6 +114,13 @@ rsh_cp
         bne rsh_cp
 
 rsh_dn
+        ; Platform ID at payload+16 (big-endian)
+        ; Atari 8-bit = 0x000B
+        lda #$00
+        sta SERIAL_TX_BUF+PAYLOAD_START+16
+        lda #$0B                ; Platform 11 = Atari 8-bit
+        sta SERIAL_TX_BUF+PAYLOAD_START+17
+
         jsr rubp_set_checksum
         jsr net_send
         rts
