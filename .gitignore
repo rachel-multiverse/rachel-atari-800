@@ -1,0 +1,5 @@
+build/*.xex
+build/*.lst
+build/*.lab
+build/*.obx
+.DS_Store
