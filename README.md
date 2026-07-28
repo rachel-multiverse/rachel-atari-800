@@ -42,6 +42,8 @@ src/
 
 Uses RUBP (Rachel Unified Binary Protocol) - 64-byte fixed messages over TCP. Same protocol as the C64 and ZX Spectrum clients.
 
+Full specification: [rachel-multiverse/protocol](https://github.com/rachel-multiverse/protocol) — also rendered at <https://rachel.stevehill.xyz/protocol>.
+
 ## Atari CIO Devices
 
 - **E:** - Screen output (channel 0)
