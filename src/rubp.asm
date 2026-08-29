@@ -24,10 +24,6 @@ rubp_init_header
         lda ZP_TEMP1
         sta SERIAL_TX_BUF+HDR_TYPE
 
-        lda #0
-        sta SERIAL_TX_BUF+HDR_FLAGS
-        sta SERIAL_TX_BUF+HDR_RESERVED
-
         lda SEQUENCE_HI
         sta SERIAL_TX_BUF+HDR_SEQ
         lda SEQUENCE_LO
@@ -47,6 +43,13 @@ rih_nc
         lda GAME_ID_LO
         sta SERIAL_TX_BUF+HDR_GAME_ID+1
 
+        ; Vintage clients do not maintain Unix time. Zero is canonical.
+        lda #0
+        sta SERIAL_TX_BUF+HDR_TIMESTAMP
+        sta SERIAL_TX_BUF+HDR_TIMESTAMP+1
+        sta SERIAL_TX_BUF+HDR_TIMESTAMP+2
+        sta SERIAL_TX_BUF+HDR_TIMESTAMP+3
+
         ldx #PAYLOAD_SIZE-1
         lda #0
 rih_clr
@@ -57,44 +60,10 @@ rih_clr
         rts
 
 ; -----------------------------------------------------------------------------
-; Calculate and set checksum
+; Compatibility name retained for callers. RUBP v1 bytes 12-15 are a
+; timestamp, not a checksum; rubp_init_header has already set them to zero.
 ; -----------------------------------------------------------------------------
 rubp_set_checksum
-        lda #0
-        sta ZP_TEMP1
-        sta ZP_TEMP2
-
-        ldx #0
-rsc_l1
-        lda SERIAL_TX_BUF,x
-        clc
-        adc ZP_TEMP1
-        sta ZP_TEMP1
-        lda #0
-        adc ZP_TEMP2
-        sta ZP_TEMP2
-        inx
-        cpx #14
-        bne rsc_l1
-
-        ldx #16
-rsc_l2
-        lda SERIAL_TX_BUF,x
-        clc
-        adc ZP_TEMP1
-        sta ZP_TEMP1
-        lda #0
-        adc ZP_TEMP2
-        sta ZP_TEMP2
-        inx
-        cpx #64
-        bne rsc_l2
-
-        lda ZP_TEMP2
-        sta SERIAL_TX_BUF+HDR_CHECKSUM
-        lda ZP_TEMP1
-        sta SERIAL_TX_BUF+HDR_CHECKSUM+1
-
         rts
 
 ; -----------------------------------------------------------------------------
@@ -121,6 +90,12 @@ rsh_dn
         lda #$0B                ; Platform 11 = Atari 8-bit
         sta SERIAL_TX_BUF+PAYLOAD_START+17
 
+        ; RachelSpec v1 (big-endian)
+        lda #0
+        sta SERIAL_TX_BUF+PAYLOAD_START+18
+        lda #RACHEL_SPEC_VER
+        sta SERIAL_TX_BUF+PAYLOAD_START+19
+
         jsr rubp_set_checksum
         jsr net_send
         rts
@@ -139,10 +114,15 @@ rubp_send_play_card
         sta SERIAL_TX_BUF+PAYLOAD_START
 
         lda ZP_TEMP3
-        sta SERIAL_TX_BUF+PAYLOAD_START+1
+        sta SERIAL_TX_BUF+PAYLOAD_START+33
+
+        lda #0
+        sta SERIAL_TX_BUF+PAYLOAD_START+34
+        lda #RACHEL_SPEC_VER
+        sta SERIAL_TX_BUF+PAYLOAD_START+35
 
         ldx #0
-        ldy #2
+        ldy #1
         lda SELECTED_LO
         sta ZP_TEMP1
         lda SELECTED_HI
@@ -205,6 +185,13 @@ rubp_send_draw_card
         lda ZP_TEMP3
         sta SERIAL_TX_BUF+PAYLOAD_START
 
+        lda #1
+        sta SERIAL_TX_BUF+PAYLOAD_START+1
+        lda #0
+        sta SERIAL_TX_BUF+PAYLOAD_START+2
+        lda #RACHEL_SPEC_VER
+        sta SERIAL_TX_BUF+PAYLOAD_START+3
+
         jsr rubp_set_checksum
         jsr net_send
         rts
@@ -262,7 +249,15 @@ rubp_parse_welcome
         sta PLAYER_ID_HI
 
         lda SERIAL_RX_BUF+PAYLOAD_START+2
+        sta GAME_ID_HI
+        lda SERIAL_RX_BUF+PAYLOAD_START+3
+        sta GAME_ID_LO
+
+        lda SERIAL_RX_BUF+PAYLOAD_START+1
         sta MY_INDEX
+
+        lda SERIAL_RX_BUF+PAYLOAD_START+4
+        sta PLAYER_COUNT
 
         rts
 
@@ -270,16 +265,23 @@ rubp_parse_welcome
 ; Parse GAME_START message
 ; -----------------------------------------------------------------------------
 rubp_parse_game_start
-        lda SERIAL_RX_BUF+HDR_GAME_ID+1
-        sta GAME_ID_LO
-        lda SERIAL_RX_BUF+HDR_GAME_ID
-        sta GAME_ID_HI
-
         lda SERIAL_RX_BUF+PAYLOAD_START
-        sta PLAYER_COUNT
+        cmp #33
+        bcc pgs_start_count_ok
+        lda #32
+pgs_start_count_ok
+        sta HAND_COUNT
 
-        lda SERIAL_RX_BUF+PAYLOAD_START+1
-        sta CURRENT_TURN
+        tax
+        beq pgs_start_done
+        ldy #0
+pgs_start_hand
+        lda SERIAL_RX_BUF+PAYLOAD_START+1,y
+        sta MY_HAND,y
+        iny
+        dex
+        bne pgs_start_hand
+pgs_start_done
 
         rts
 
@@ -300,34 +302,40 @@ rubp_parse_game_state
         sta NOMINATED_SUIT
 
         lda SERIAL_RX_BUF+PAYLOAD_START+4
-        sta DECK_COUNT
-
-        lda SERIAL_RX_BUF+PAYLOAD_START+5
         sta PENDING_DRAWS
 
-        lda SERIAL_RX_BUF+PAYLOAD_START+6
+        lda SERIAL_RX_BUF+PAYLOAD_START+5
         sta PENDING_SKIPS
+
+        lda SERIAL_RX_BUF+PAYLOAD_START+6
+        sta DECK_COUNT
 
         ldx #0
 pgs_cnt
-        lda SERIAL_RX_BUF+PAYLOAD_START+8,x
+        lda SERIAL_RX_BUF+PAYLOAD_START+7,x
         sta PLAYER_COUNTS,x
         inx
         cpx #8
         bne pgs_cnt
 
-        lda SERIAL_RX_BUF+PAYLOAD_START+7
-        sta HAND_COUNT
+        rts
 
-        tax
-        beq pgs_dn
+; CARD_DRAWN has the same count + card-array shape as GAME_START.
+rubp_parse_card_drawn
+        lda SERIAL_RX_BUF+PAYLOAD_START
+        beq pcd_done
+        sta ZP_TEMP1
         ldy #0
-pgs_hnd
-        lda SERIAL_RX_BUF+PAYLOAD_START+16,y
-        sta MY_HAND,y
+pcd_loop
+        lda HAND_COUNT
+        cmp #32
+        bcs pcd_done
+        tax
+        lda SERIAL_RX_BUF+PAYLOAD_START+1,y
+        sta MY_HAND,x
+        inc HAND_COUNT
         iny
-        dex
-        bne pgs_hnd
-
-pgs_dn
+        dec ZP_TEMP1
+        bne pcd_loop
+pcd_done
         rts

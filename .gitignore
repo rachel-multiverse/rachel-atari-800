@@ -2,4 +2,5 @@ build/*.xex
 build/*.lst
 build/*.lab
 build/*.obx
+.tools/
 .DS_Store

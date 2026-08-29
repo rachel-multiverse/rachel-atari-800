@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build XEX and run conformance checks
+        run: make test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rachel-atari8-xex
+          path: build/rachel.xex

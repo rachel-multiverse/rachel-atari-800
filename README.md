@@ -8,13 +8,17 @@ A render-only client for the Rachel card game, written in 6502 assembly for the 
 
 ## Requirements
 
-- [MADS](https://github.com/tebe6502/Mad-Assembler) - Mad Assembler for 6502
 - [Altirra](https://www.virtualdub.org/altirra.html) or [Atari800](https://atari800.github.io/) for emulation
+
+`make` downloads a checksum-verified MADS binary pinned to an exact upstream
+commit. Linux x86-64 and Apple Silicon are supported by the bootstrap script;
+set `MADS=/path/to/mads` on other hosts.
 
 ## Building
 
 ```bash
 make        # Build rachel.xex
+make test   # Build and verify wire constants/XEX memory safety
 make run    # Run in Atari800 emulator
 make clean  # Remove build artifacts
 ```
@@ -40,7 +44,10 @@ src/
 
 ## Protocol
 
-Uses RUBP (Rachel Unified Binary Protocol) - 64-byte fixed messages over TCP. Same protocol as the C64 and ZX Spectrum clients.
+Uses RUBP v1 (Rachel Unified Binary Protocol): fixed 64-byte messages over TCP,
+with canonical message IDs, big-endian header fields and RachelSpec v1 action
+metadata. Private hand changes arrive through `GAME_START` and `CARD_DRAWN`;
+`GAME_STATE` contains public state only.
 
 Full specification: [rachel-multiverse/protocol](https://github.com/rachel-multiverse/protocol) — also rendered at <https://rachel.stevehill.xyz/protocol>.
 
@@ -52,6 +59,7 @@ Full specification: [rachel-multiverse/protocol](https://github.com/rachel-multi
 
 ## Testing
 
+- `make test` checks the assembled XEX and canonical protocol constants on every CI run.
 - **Altirra** - Full-featured Atari emulator with FujiNet support
 - **Atari800** - Cross-platform emulator
 - **Real hardware** - Load via FujiNet or SIO2SD

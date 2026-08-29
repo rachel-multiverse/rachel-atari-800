@@ -120,7 +120,13 @@ check_network
         cmp #MSG_GAME_STATE
         beq cn_gstate
 
-        cmp #MSG_GAME_OVER
+        cmp #MSG_CARD_DRAWN
+        beq cn_drawn
+
+        cmp #MSG_HAND_SYNC
+        beq cn_hsync
+
+        cmp #MSG_PLAYER_WON
         beq cn_gover
 
 cn_done
@@ -129,6 +135,16 @@ cn_done
 cn_gstate
         jsr rubp_parse_game_state
         jsr redraw_game
+        rts
+
+cn_drawn
+        jsr rubp_parse_card_drawn
+        jsr draw_hand
+        rts
+
+cn_hsync
+        jsr rubp_parse_game_start
+        jsr draw_hand
         rts
 
 cn_gover
@@ -362,6 +378,16 @@ txt_welcome
 
 txt_press_key
         dta c'PRESS ANY KEY TO CONNECT...',0
+
+; Application-owned storage. Keeping it in the load image avoids collisions
+; with Atari OS/DOS workspaces (especially the IOCB table in page 3).
+VAR_BASE        :32 dta 0
+MY_HAND         :32 dta 0
+PLAYER_COUNTS   :8 dta 0
+PLAYER_NAMES    :128 dta 0
+IP_INPUT_BUF    :32 dta 0
+SERIAL_RX_BUF   :64 dta 0
+SERIAL_TX_BUF   :64 dta 0
 
 ; =============================================================================
 ; MODULE INCLUDES

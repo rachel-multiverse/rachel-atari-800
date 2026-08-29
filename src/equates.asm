@@ -49,22 +49,11 @@ CONN_WAITING      = 3
 CONN_PLAYING      = 4
 
 ; =============================================================================
-; FIXED MEMORY BUFFERS
+; APPLICATION BUFFERS
 ; =============================================================================
 
-; Game state buffers ($0300-$03FF)
-GAME_BUFFERS    = $0300
-MY_HAND         = GAME_BUFFERS          ; 32 bytes
-PLAYER_COUNTS   = GAME_BUFFERS+32       ; 8 bytes
-PLAYER_NAMES    = GAME_BUFFERS+40       ; 128 bytes (8x16)
-IP_INPUT_BUF    = GAME_BUFFERS+168      ; 32 bytes
-
-; Serial/Network buffers ($0400-$047F)
-SERIAL_RX_BUF   = $0400                 ; 64 bytes
-SERIAL_TX_BUF   = $0440                 ; 64 bytes
-
-; Game variables ($0480-$049F)
-VAR_BASE        = $0480
+; These labels are allocated inside the XEX in main.asm.  Do not place them in
+; page 3: $0340-$03BF is the Atari OS IOCB table used by CIO/FujiNet.
 CONN_STATE      = VAR_BASE
 SEQUENCE_LO     = VAR_BASE+1
 SEQUENCE_HI     = VAR_BASE+2
@@ -100,28 +89,34 @@ MAGIC_3         = 'H'
 
 ; Protocol version
 PROTOCOL_VER    = $01
+RACHEL_SPEC_VER = $01
 
 ; Message types
 MSG_HELLO       = $01
 MSG_WELCOME     = $02
-MSG_GAME_START  = $10
-MSG_GAME_STATE  = $11
-MSG_PLAY_CARD   = $20
-MSG_DRAW_CARD   = $21
-MSG_PLAYER_OUT  = $30
-MSG_GAME_OVER   = $31
-MSG_ERROR       = $FF
+MSG_GAME_START  = $03
+MSG_PLAY_CARD   = $04
+MSG_DRAW_CARD   = $05
+MSG_CARD_DRAWN  = $06
+MSG_GAME_STATE  = $07
+MSG_TURN_START  = $08
+MSG_TURN_END    = $09
+MSG_PLAYER_WON  = $0A
+MSG_ERROR       = $0B
+MSG_PLAYER_LIST = $0C
+MSG_ANNOUNCE    = $0D
+MSG_PLAYER_NAME = $0E
+MSG_HAND_SYNC   = $0F
+MSG_SYNC_REQUEST= $10
 
 ; Header offsets
 HDR_MAGIC       = 0
 HDR_VERSION     = 4
 HDR_TYPE        = 5
-HDR_FLAGS       = 6
-HDR_RESERVED    = 7
-HDR_SEQ         = 8
-HDR_PLAYER_ID   = 10
-HDR_GAME_ID     = 12
-HDR_CHECKSUM    = 14
+HDR_SEQ         = 6
+HDR_PLAYER_ID   = 8
+HDR_GAME_ID     = 10
+HDR_TIMESTAMP   = 12
 HDR_SIZE        = 16
 
 ; Payload
