@@ -58,6 +58,8 @@ do_connect
         jsr rubp_send_hello
 
         jsr rubp_receive
+        cmp #0
+        bne dc_fl
         jsr rubp_validate
         bne dc_fl
 
@@ -93,6 +95,8 @@ wfg_lp
         beq wfg_cn
 
         jsr rubp_receive
+        cmp #0
+        bne wfg_cn
         jsr rubp_validate
         bne wfg_lp
 

@@ -135,6 +135,28 @@ SUIT_SPADES     = 3
 
 ; CIO Vector
 CIOV            = $E456
+SIOV            = $E459
+
+; Device Control Block used by the Atari OS SIO vector
+DCB             = $0300
+DDEVIC          = DCB
+DUNIT           = DCB+1
+DCOMND          = DCB+2
+DSTATS          = DCB+3
+DBUFL           = DCB+4
+DBUFH           = DCB+5
+DTIMLO          = DCB+6
+DBYTL           = DCB+8
+DBYTH           = DCB+9
+DAUXL           = DCB+10
+DAUXH           = DCB+11
+DVSTAT          = $02EA
+
+; FujiNet Atari SIO network device
+FUJINET_NDEV    = $71
+SIO_READ        = $40
+SIO_WRITE       = $80
+SIO_OK          = 1
 
 ; IOCB (Input/Output Control Block) base addresses
 IOCB0           = $0340         ; E: device (screen)

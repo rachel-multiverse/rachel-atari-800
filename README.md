@@ -2,9 +2,16 @@
 
 A render-only client for the Rachel card game, written in 6502 assembly for the Atari 400/800/XL/XE.
 
-## Hardware Targets
+## Hardware target
 
-- **FujiNet** - WiFi adapter for Atari 8-bit providing TCP/IP via N: device
+- **Atari 8-bit FujiNet hardware v1.0 or later**, connected to the Atari SIO
+  port and running the Atari build of FujiNet firmware. The current official
+  hardware revision is 1.7; the network protocol is shared by earlier released
+  Atari boards.
+
+Rachel talks directly to FujiNet SIO network device `$71`. It does not require
+the optional resident `N:` CIO handler. Its only external runtime assumptions
+are configured Wi-Fi and reachable raw TCP service on the entered `HOST:PORT`.
 
 ## Requirements
 
@@ -51,18 +58,30 @@ metadata. Private hand changes arrive through `GAME_START` and `CARD_DRAWN`;
 
 Full specification: [rachel-multiverse/protocol](https://github.com/rachel-multiverse/protocol) — also rendered at <https://rachel.stevehill.xyz/protocol>.
 
-## Atari CIO Devices
+## Atari devices
 
 - **E:** - Screen output (channel 0)
 - **K:** - Keyboard input
-- **N:** - FujiNet network device (channel 1)
+- **FujiNet `$71`:** direct SIO networking (`O`, `S`, `R`, `W`, and `C`)
 
 ## Testing
 
 - `make test` checks the assembled XEX and canonical protocol constants on every CI run.
 - **Altirra** - Full-featured Atari emulator with FujiNet support
 - **Atari800** - Cross-platform emulator
-- **Real hardware** - Load via FujiNet or SIO2SD
+- **Real hardware** - Load via FujiNet or SIO2SD; no DOS network handler needed
+
+## Original-hardware smoke test
+
+1. Update an Atari FujiNet to the current Atari firmware and configure Wi-Fi.
+2. Start a Rachel Go server reachable over unencrypted TCP from the same LAN.
+3. Load `build/rachel.xex` directly from FujiNet or an SIO disk device.
+4. Enter the server as `IPv4-address:port` (for example `192.168.1.20:6502`).
+5. Confirm the client receives `WELCOME`, enters the lobby, and receives its
+   private hand when the game starts.
+6. Play and draw at least one card, then confirm a second 64-byte message is not
+   lost or merged with the first.
+7. Power-cycle FujiNet and repeat to prove there is no resident-handler state.
 
 ## License
 

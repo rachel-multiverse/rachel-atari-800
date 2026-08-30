@@ -59,7 +59,21 @@ def test_xex_avoids_iocbs() -> None:
     assert not any(start <= 0x03BF and end >= 0x0340 for start, end in segments)
 
 
+def test_fujinet_driver_uses_real_sio_network_device() -> None:
+    source = (ROOT / "src/net/fujinet.asm").read_text()
+    equates = constants()
+
+    assert equates["FUJINET_NDEV"] == 0x71
+    assert equates["SIOV"] == 0xE459
+    for command in ("'O'", "'S'", "'R'", "'W'", "'C'"):
+        assert command in source
+    assert "jsr SIOV" in source
+    assert "jsr CIOV" not in source
+    assert "fn_url  :256" in source
+
+
 if __name__ == "__main__":
     test_wire_constants()
     test_xex_avoids_iocbs()
+    test_fujinet_driver_uses_real_sio_network_device()
     print("Atari RUBP/XEX conformance checks passed")

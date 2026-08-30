@@ -112,6 +112,8 @@ check_network
         beq cn_done
 
         jsr rubp_receive
+        cmp #0
+        bne cn_done
         jsr rubp_validate
         bne cn_done
 
